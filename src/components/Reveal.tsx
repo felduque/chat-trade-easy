@@ -2,14 +2,12 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 export function Reveal({
   children,
-  as: Tag = "div",
   className = "",
 }: {
   children: ReactNode;
-  as?: keyof HTMLElementTagNameMap;
   className?: string;
 }) {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -29,10 +27,9 @@ export function Reveal({
     return () => io.disconnect();
   }, []);
 
-  // @ts-expect-error dynamic tag
   return (
-    <Tag ref={ref as never} className={`reveal ${className}`}>
+    <div ref={ref} className={`reveal ${className}`}>
       {children}
-    </Tag>
+    </div>
   );
 }

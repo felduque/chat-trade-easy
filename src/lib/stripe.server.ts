@@ -8,7 +8,7 @@ export function getStripe(): Stripe {
     throw new Error("STRIPE_SECRET_KEY no está configurado");
   }
   return new Stripe(key, {
-    apiVersion: "2025-05-28.basil",
+    apiVersion: "2026-06-24.dahlia",
     // Workers no soporta el HTTP client nativo de Node; forzamos fetch.
     httpClient: Stripe.createFetchHttpClient(),
   });
