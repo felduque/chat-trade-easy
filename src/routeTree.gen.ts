@@ -13,7 +13,6 @@ import { Route as SuccessRouteImport } from './routes/success'
 import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
-import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 
 const SuccessRoute = SuccessRouteImport.update({
   id: '/success',
@@ -35,25 +34,18 @@ const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
   path: '/api/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
-  id: '/api/public/stripe-webhook',
-  path: '/api/public/stripe-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cancel': typeof CancelRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
-  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cancel': typeof CancelRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
-  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,30 +53,13 @@ export interface FileRoutesById {
   '/cancel': typeof CancelRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
-  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/cancel'
-    | '/success'
-    | '/api/checkout'
-    | '/api/public/stripe-webhook'
+  fullPaths: '/' | '/cancel' | '/success' | '/api/checkout'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/cancel'
-    | '/success'
-    | '/api/checkout'
-    | '/api/public/stripe-webhook'
-  id:
-    | '__root__'
-    | '/'
-    | '/cancel'
-    | '/success'
-    | '/api/checkout'
-    | '/api/public/stripe-webhook'
+  to: '/' | '/cancel' | '/success' | '/api/checkout'
+  id: '__root__' | '/' | '/cancel' | '/success' | '/api/checkout'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -92,7 +67,6 @@ export interface RootRouteChildren {
   CancelRoute: typeof CancelRoute
   SuccessRoute: typeof SuccessRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
-  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -125,13 +99,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/stripe-webhook': {
-      id: '/api/public/stripe-webhook'
-      path: '/api/public/stripe-webhook'
-      fullPath: '/api/public/stripe-webhook'
-      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -140,7 +107,6 @@ const rootRouteChildren: RootRouteChildren = {
   CancelRoute: CancelRoute,
   SuccessRoute: SuccessRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
-  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

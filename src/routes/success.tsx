@@ -2,11 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { getCheckoutSession } from "@/lib/checkout.functions";
+import { verifyCreemRedirect } from "@/lib/checkout.functions";
 
-const searchSchema = z.object({
-  session_id: z.string().optional(),
-});
+// Creem redirige con estos params (más `signature`). Aceptamos cualquier
+// combinación — la verificación real la hace el server con la API key.
+const searchSchema = z
+  .object({
+    checkout_id: z.string().optional(),
+    order_id: z.string().optional(),
+    customer_id: z.string().optional(),
+    subscription_id: z.string().optional(),
+    product_id: z.string().optional(),
+    request_id: z.string().optional(),
+    signature: z.string().optional(),
+  })
+  .passthrough();
 
 export const Route = createFileRoute("/success")({
   validateSearch: searchSchema,
@@ -21,27 +31,43 @@ export const Route = createFileRoute("/success")({
 });
 
 function SuccessPage() {
-  const { session_id } = Route.useSearch();
-  const fetchSession = useServerFn(getCheckoutSession);
+  const search = Route.useSearch() as Record<string, string | undefined>;
+  const verifyFn = useServerFn(verifyCreemRedirect);
+
+  const hasSignature = !!search.signature;
+
+  const params: Record<string, string> = Object.fromEntries(
+    Object.entries(search).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["checkout-session", session_id],
-    queryFn: () => fetchSession({ data: { sessionId: session_id! } }),
-    enabled: !!session_id,
+    queryKey: ["creem-verify", search.signature, search.order_id],
+    queryFn: () => verifyFn({ data: { params } }),
+    enabled: hasSignature,
     retry: 1,
   });
 
-  const paid = data?.paymentStatus === "paid";
+  const verified = data?.verified === true;
 
   return (
     <div className="min-h-screen bg-background px-6 py-20 text-foreground md:py-32">
       <div className="mx-auto max-w-2xl">
         <p className="eyebrow">
-          {isLoading ? "Verificando pago…" : paid ? "Pago confirmado" : "Estado del pago"}
+          {!hasSignature
+            ? "Estado del pago"
+            : isLoading
+              ? "Verificando pago…"
+              : verified
+                ? "Pago confirmado"
+                : "Revisando pago"}
         </p>
         <h1 className="serif-display mt-6 text-5xl md:text-6xl">
-          {paid ? (
-            <>Gracias. Ya <span className="italic text-accent-ink">eres parte</span>.</>
+          {verified ? (
+            <>
+              Gracias. Ya <span className="italic text-accent-ink">eres parte</span>.
+            </>
           ) : isLoading ? (
             "Confirmando tu compra…"
           ) : (
@@ -59,16 +85,12 @@ function SuccessPage() {
         {data && (
           <div className="mt-10 rule-t rule-b border-x border-rule bg-surface p-6 font-mono text-sm">
             <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
-              <span className="text-muted-foreground">Correo</span>
-              <span>{data.email ?? "—"}</span>
-              <span className="text-muted-foreground">Total</span>
-              <span>
-                {data.amountTotal != null && data.currency
-                  ? `${(data.amountTotal / 100).toFixed(2)} ${data.currency.toUpperCase()}`
-                  : "—"}
-              </span>
-              <span className="text-muted-foreground">Estado</span>
-              <span>{data.paymentStatus}</span>
+              <span className="text-muted-foreground">Orden</span>
+              <span>{data.orderId ?? "—"}</span>
+              <span className="text-muted-foreground">Checkout</span>
+              <span>{data.checkoutId ?? "—"}</span>
+              <span className="text-muted-foreground">Firma</span>
+              <span>{verified ? "válida" : "no verificada"}</span>
             </div>
           </div>
         )}
