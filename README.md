@@ -1,154 +1,119 @@
-# Trading Assistant — Dg-Developers
+# Trading Assistant — Landing + Checkout con Creem
 
-Landing de un solo producto ("Trading Assistant", un servidor MCP para
-Claude Desktop / Cursor) con checkout de Stripe. Construida sobre
-**TanStack Start + Vite + Tailwind CSS v4**, desplegable en Cloudflare
-Workers vía Lovable Cloud.
+Landing de venta de un único producto (un servidor MCP para clientes de IA como
+Claude Desktop / Cursor) con checkout de **Creem**. Construida sobre:
 
-## Stack
+- TanStack Start v1 (App Router equivalente basado en Vite + React 19)
+- TypeScript estricto
+- Tailwind CSS v4 (tokens semánticos en `src/styles.css`)
+- Creem (merchant of record — cubre países donde Stripe no opera)
 
-- TanStack Start (App Router-equivalente basado en `src/routes/`).
-- TypeScript estricto.
-- Tailwind v4 (design system en `src/styles.css`, tokens `oklch`).
-- Stripe Node SDK (`stripe`) para server-side; redirect a Stripe Checkout
-  (no Elements — cero claves secretas en el bundle cliente).
-- Fuentes Fraunces + Inter + JetBrains Mono vía Google Fonts.
+> Nota: este proyecto **no** usa Next.js aunque el brief original lo mencionara.
+> El stack base de Lovable es TanStack Start; los conceptos son equivalentes:
+> file-based routing en `src/routes/`, server routes para APIs, y server
+> functions tipadas para RPC cliente→servidor.
 
 ## Estructura
 
-```
-src/
-  routes/
-    __root.tsx                 # meta, fuentes, layout
-    index.tsx                  # landing completa (10 secciones)
-    success.tsx                # confirmación post-pago
-    cancel.tsx                 # pago cancelado
-    api/
-      checkout.ts              # POST /api/checkout -> { url }
-      public/
-        stripe-webhook.ts      # POST /api/public/stripe-webhook
-  components/
-    StickyHeader.tsx           # header sticky con CTA condensado
-    BuyButton.tsx              # botón que crea la Checkout Session y redirige
-    ChatMockup.tsx             # mockup del hero (puro CSS)
-    Reveal.tsx                 # scroll-reveal sutil
-  lib/
-    stripe.server.ts           # factory del cliente Stripe (server-only)
-    checkout.functions.ts      # server function que lee la sesión post-pago
-```
+    src/
+      routes/
+        __root.tsx                       # shell + <head>
+        index.tsx                        # landing (8 secciones)
+        success.tsx                      # /success — verifica firma del redirect
+        cancel.tsx                       # /cancel
+        api/
+          checkout.ts                    # POST /api/checkout  → crea checkout en Creem
+          public/
+            creem-webhook.ts             # POST /api/public/creem-webhook
+      components/
+        StickyHeader.tsx
+        BuyButton.tsx
+        ChatMockup.tsx
+        Reveal.tsx
+      lib/
+        pricing.ts                       # precio, precio promo y fecha de fin
+        creem.server.ts                  # cliente Creem + verificación HMAC
+        checkout.functions.ts            # verifyCreemRedirect (server fn)
 
-## Configurar Stripe
+## Configurar Creem
 
-### 1. Crear el producto y precio en Stripe Dashboard
+### 1. Crear el producto en Creem
 
-1. Entra a [Stripe Dashboard → Productos](https://dashboard.stripe.com/products).
-2. **Añadir producto**:
-   - Nombre: `Trading Assistant`
-   - Descripción: la que quieras que vea el cliente.
-   - **Precio**: `Precio único` (one-time), pon el monto en USD.
-3. Guarda y copia el **Price ID** (`price_...`) — no el Product ID.
+1. Entra al [dashboard de Creem](https://dashboard.creem.io).
+2. Crea un producto **Trading Assistant** de pago único.
+3. Crea **dos precios / productos**:
+   - Precio completo: **20 USD** → guarda su `product_id` como `CREEM_PRODUCT_ID`.
+   - Precio promo lanzamiento: **10 USD** → guarda su `product_id` como
+     `CREEM_PRODUCT_ID_PROMO`.
 
-### 2. Obtener las claves
+La landing decide cuál usar según la fecha (`src/lib/pricing.ts`):
 
-- **API key secreta**: Dashboard → Desarrolladores → API keys → `Secret key`
-  (`sk_test_...` en modo test, `sk_live_...` en producción).
-- **Webhook signing secret**: se genera al crear el endpoint (paso 4).
+- Hasta el **31 de julio de 2026 (23:59 UTC)** → precio promo.
+- Después → precio completo (y el badge de descuento desaparece automáticamente).
 
-### 3. Guardarlas en Lovable
+Si sólo configuras `CREEM_PRODUCT_ID`, se usa siempre ese; el descuento
+seguirá reflejado en el copy pero el cobro será el del `CREEM_PRODUCT_ID`.
 
-Este proyecto NO usa `.env` en runtime. Los secretos se guardan en el sistema
-de secrets de Lovable y se inyectan como variables de entorno en el server:
+### 2. Sacar la API key
 
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PRICE_ID`
+En Creem → Developers → API Keys. Copia la clave (`creem_test_...` para
+pruebas, `creem_live_...` para producción) y guárdala como `CREEM_API_KEY`.
 
-Ya se piden desde el agente Lovable con el formulario seguro — no los pongas
-en el código ni en ningún archivo commit.
+### 3. Configurar el webhook
 
-### 4. Configurar el webhook
+En Creem → Developers → Webhooks, crea un endpoint apuntando a la URL estable
+del proyecto en Lovable:
 
-En Dashboard → Desarrolladores → Webhooks → **Add endpoint**:
+- Preview: `https://project--<PROJECT_ID>-dev.lovable.app/api/public/creem-webhook`
+- Producción: `https://project--<PROJECT_ID>.lovable.app/api/public/creem-webhook`
 
-- **URL de producción**:
-  `https://project--<PROJECT_ID>.lovable.app/api/public/stripe-webhook`
-- **URL de preview** (opcional):
-  `https://project--<PROJECT_ID>-dev.lovable.app/api/public/stripe-webhook`
-- **Eventos**: `checkout.session.completed` (mínimo). Opcional:
-  `checkout.session.expired`.
-- Al crearlo, Stripe muestra el **signing secret** (`whsec_...`). Guárdalo como
-  `STRIPE_WEBHOOK_SECRET`.
+Activa al menos los eventos:
 
-> El prefijo `/api/public/*` es lo que Lovable expone sin gate de auth para
-> callers externos. La seguridad del endpoint la aporta la verificación HMAC
-> de la firma que hace `stripe.webhooks.constructEventAsync`.
+- `checkout.completed` / `order.paid`
+- `refund.created` / `order.refunded`
 
-### 5. Probar el webhook en local
+Al crearlo Creem muestra un **signing secret**. Guárdalo como
+`CREEM_WEBHOOK_SECRET`.
 
-Con el CLI de Stripe:
+## Variables de entorno
 
-```bash
-stripe login
-stripe listen --forward-to http://localhost:8080/api/public/stripe-webhook
-```
+Todas se configuran vía Lovable (add_secret). Nunca en un `.env` versionado.
 
-El CLI te dará un `whsec_...` temporal. Usa ese mientras desarrollas,
-guardándolo también en `STRIPE_WEBHOOK_SECRET` en tus secretos de preview.
+| Nombre                    | Uso                                                    |
+| ------------------------- | ------------------------------------------------------ |
+| `CREEM_API_KEY`           | Clave secreta de Creem (creem_test_… / creem_live_…)   |
+| `CREEM_PRODUCT_ID`        | Producto de precio completo (20 USD)                   |
+| `CREEM_PRODUCT_ID_PROMO`  | (Opcional) Producto de precio promo (10 USD)           |
+| `CREEM_WEBHOOK_SECRET`    | Secreto de firma HMAC del webhook                      |
+| `CREEM_API_BASE`          | (Opcional) Override de `https://api.creem.io`          |
 
-Para disparar un evento manualmente:
+## Flujo end-to-end
 
-```bash
-stripe trigger checkout.session.completed
-```
+1. Usuario hace click en un **Comprar** → `BuyButton` hace `POST /api/checkout`.
+2. `/api/checkout` elige `product_id` (promo o completo según la fecha) y llama
+   a `POST https://api.creem.io/v1/checkouts` con `x-api-key`.
+3. Redirige al `checkout_url` de Creem.
+4. Tras pagar, Creem redirige a `/success?checkout_id=...&order_id=...&signature=...`.
+5. `/success` verifica la firma con `verifyCreemRedirect` (HMAC-SHA256 con la
+   API key sobre los parámetros ordenados alfabéticamente y unidos con `|`).
+6. En paralelo, Creem llama al webhook `/api/public/creem-webhook` con el
+   header `creem-signature`. Verificamos HMAC-SHA256 del body en crudo contra
+   `CREEM_WEBHOOK_SECRET`. Ahí procesamos `checkout.completed`.
 
-## Flujo de compra
+## TODOs pendientes (marcados en el código)
 
-1. Usuario hace click en **Comprar** → `POST /api/checkout`.
-2. El server route crea una `Checkout Session` (`mode: payment`, un solo line
-   item con `STRIPE_PRICE_ID`) y devuelve `{ url }`.
-3. El botón hace `window.location.href = url` → Stripe Checkout.
-4. Éxito → `/success?session_id=…` verifica la sesión con
-   `stripe.checkout.sessions.retrieve` y muestra el resumen.
-5. Cancelación → `/cancel`.
-6. En paralelo, Stripe llama al webhook `/api/public/stripe-webhook`:
-   - Verifica la firma con `constructEventAsync` (SubtleCrypto — compatible
-     con Cloudflare Workers).
-   - En `checkout.session.completed`: **TODO** — emitir licencia y enviar
-     correo con el enlace de descarga (buscar los `TODO:` en el archivo).
+En `src/routes/api/public/creem-webhook.ts`, dentro del case
+`checkout.completed`:
 
-## Desarrollo
+- Emitir la licencia (generar `license_key`, guardarla asociada al `order_id`).
+- Enviar el correo con la licencia y el enlace de descarga (Resend / Postmark).
 
-El sandbox de Lovable ya corre el dev server. Localmente:
+## Notas técnicas
 
-```bash
-bun install
-bun run dev
-```
-
-Abre `http://localhost:8080`.
-
-## Deploy
-
-Se publica con el botón **Publish** de Lovable. El backend se despliega en
-Cloudflare Workers (con `nodejs_compat`); el SDK de Stripe usa `fetch`
-en runtime — no requiere configuración extra.
-
-URLs estables (no cambian aunque renombres el proyecto):
-
-- Producción: `https://project--<PROJECT_ID>.lovable.app`
-- Preview: `https://project--<PROJECT_ID>-dev.lovable.app`
-
-Configura el webhook de Stripe contra esas URLs para que no se rompa cuando
-haya cambios de dominio.
-
-## TODOs abiertos (post-pago)
-
-En `src/routes/api/public/stripe-webhook.ts`, dentro del handler de
-`checkout.session.completed`:
-
-- Generar y persistir una licencia por sesión / cliente.
-- Enviar correo transaccional (Resend, Postmark…) con la licencia y el link
-  de descarga del binario.
-
-Todo lo demás — landing, checkout, verificación de firma, páginas de
-success / cancel — está funcional.
+- El SDK oficial de Creem no es necesario: usamos `fetch` directo, compatible
+  con Cloudflare Workers.
+- La verificación HMAC usa `SubtleCrypto` (no `crypto` de Node) para funcionar
+  en el runtime de Cloudflare Workers.
+- Todo el copy de la landing está en español.
+- `src/lib/pricing.ts` es la fuente única del precio y de la fecha de fin del
+  descuento. Cambia ahí para ajustar la promo.

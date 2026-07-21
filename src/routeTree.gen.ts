@@ -13,7 +13,7 @@ import { Route as SuccessRouteImport } from './routes/success'
 import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
-import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
+import { Route as ApiPublicCreemWebhookRouteImport } from './routes/api/public/creem-webhook'
 
 const SuccessRoute = SuccessRouteImport.update({
   id: '/success',
@@ -35,9 +35,9 @@ const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
   path: '/api/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
-  id: '/api/public/stripe-webhook',
-  path: '/api/public/stripe-webhook',
+const ApiPublicCreemWebhookRoute = ApiPublicCreemWebhookRouteImport.update({
+  id: '/api/public/creem-webhook',
+  path: '/api/public/creem-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -46,14 +46,14 @@ export interface FileRoutesByFullPath {
   '/cancel': typeof CancelRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
-  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/creem-webhook': typeof ApiPublicCreemWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cancel': typeof CancelRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
-  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/creem-webhook': typeof ApiPublicCreemWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,7 +61,7 @@ export interface FileRoutesById {
   '/cancel': typeof CancelRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
-  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
+  '/api/public/creem-webhook': typeof ApiPublicCreemWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -70,21 +70,21 @@ export interface FileRouteTypes {
     | '/cancel'
     | '/success'
     | '/api/checkout'
-    | '/api/public/stripe-webhook'
+    | '/api/public/creem-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cancel'
     | '/success'
     | '/api/checkout'
-    | '/api/public/stripe-webhook'
+    | '/api/public/creem-webhook'
   id:
     | '__root__'
     | '/'
     | '/cancel'
     | '/success'
     | '/api/checkout'
-    | '/api/public/stripe-webhook'
+    | '/api/public/creem-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -92,7 +92,7 @@ export interface RootRouteChildren {
   CancelRoute: typeof CancelRoute
   SuccessRoute: typeof SuccessRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
-  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
+  ApiPublicCreemWebhookRoute: typeof ApiPublicCreemWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -125,11 +125,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/stripe-webhook': {
-      id: '/api/public/stripe-webhook'
-      path: '/api/public/stripe-webhook'
-      fullPath: '/api/public/stripe-webhook'
-      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+    '/api/public/creem-webhook': {
+      id: '/api/public/creem-webhook'
+      path: '/api/public/creem-webhook'
+      fullPath: '/api/public/creem-webhook'
+      preLoaderRoute: typeof ApiPublicCreemWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -140,18 +140,8 @@ const rootRouteChildren: RootRouteChildren = {
   CancelRoute: CancelRoute,
   SuccessRoute: SuccessRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
-  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
+  ApiPublicCreemWebhookRoute: ApiPublicCreemWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
