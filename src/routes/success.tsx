@@ -107,6 +107,27 @@ function SuccessPage() {
           </p>
         </div>
 
+        <div className="mt-10 rule-t border-x border-rule bg-surface p-6">
+          <p className="eyebrow">Siguiente paso</p>
+          <h2
+            className="serif-display mt-3 text-2xl md:text-3xl"
+            style={{ fontWeight: 600 }}
+          >
+            Instálalo en 10 minutos
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Guía paso a paso para Claude, ChatGPT, Kimi, Cursor u otro cliente MCP.
+          </p>
+          <div className="mt-5">
+            <Link
+              to="/guia"
+              className="inline-flex items-center gap-2 bg-foreground px-5 py-3 font-mono text-xs uppercase tracking-[0.18em] text-background hover:opacity-90"
+            >
+              Abrir la guía →
+            </Link>
+          </div>
+        </div>
+
         <div className="mt-12">
           <Link
             to="/"
