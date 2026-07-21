@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { StickyHeader } from "@/components/StickyHeader";
 import { BuyButton } from "@/components/BuyButton";
 import { ChatMockup } from "@/components/ChatMockup";
