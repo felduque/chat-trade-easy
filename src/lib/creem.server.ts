@@ -4,11 +4,11 @@
 // Stripe no opera. Docs: https://docs.creem.io
 //
 // Vars de entorno:
-//   CREEM_API_KEY           — clave secreta (creem_test_... o creem_live_...)
-//   CREEM_PRODUCT_ID        — product_id de precio completo (20 USD)
-//   CREEM_PRODUCT_ID_PROMO  — product_id de precio promo (10 USD), opcional
-//   CREEM_WEBHOOK_SECRET    — secreto para verificar la firma del webhook
-//   CREEM_API_BASE          — opcional, por defecto https://api.creem.io
+//   CREEM_API_KEY         — clave secreta (creem_test_... o creem_live_...)
+//   CREEM_PRODUCT_ID      — product_id de precio completo (20 USD)
+//   CREEM_PROMO_CODE      — cupón de descuento de la promo (opcional)
+//   CREEM_WEBHOOK_SECRET  — secreto para verificar la firma del webhook
+//   CREEM_API_BASE        — opcional, por defecto https://api.creem.io
 
 const DEFAULT_BASE = "https://api.creem.io";
 
@@ -25,6 +25,7 @@ type CreateCheckoutInput = {
   productId: string;
   requestId: string;
   successUrl: string;
+  discountCode?: string;
   metadata?: Record<string, string>;
 };
 
@@ -49,6 +50,9 @@ export async function createCreemCheckout(
       product_id: input.productId,
       request_id: input.requestId,
       success_url: input.successUrl,
+      // Cupón de descuento (p. ej. la promo por tiempo limitado). Creem lo
+      // aplica sobre el product_id de precio completo.
+      ...(input.discountCode ? { discount_code: input.discountCode } : {}),
       metadata: input.metadata,
     }),
   });

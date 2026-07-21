@@ -9,13 +9,7 @@ export const Route = createFileRoute("/api/checkout")({
           const { createCreemCheckout } = await import("@/lib/creem.server");
 
           const promoActive = isPromoActive();
-          const promoProductId = process.env.CREEM_PRODUCT_ID_PROMO;
-          const fullProductId = process.env.CREEM_PRODUCT_ID;
-
-          // Si la promo está activa y hay product_id promo configurado, úsalo.
-          // En cualquier otro caso, cae al product_id de precio completo.
-          const productId =
-            promoActive && promoProductId ? promoProductId : fullProductId;
+          const productId = process.env.CREEM_PRODUCT_ID;
 
           if (!productId) {
             return Response.json(
@@ -26,6 +20,11 @@ export const Route = createFileRoute("/api/checkout")({
               { status: 500 },
             );
           }
+
+          // La promo es un CUPÓN de descuento (no un producto aparte). Si está
+          // activa, aplicamos el código sobre el product_id de precio completo.
+          const promoCode = process.env.CREEM_PROMO_CODE;
+          const discountCode = promoActive ? promoCode : undefined;
 
           const origin =
             request.headers.get("origin") ?? new URL(request.url).origin;
@@ -38,6 +37,7 @@ export const Route = createFileRoute("/api/checkout")({
             productId,
             requestId,
             successUrl: `${origin}/success`,
+            discountCode,
             metadata: {
               product: "trading-assistant",
               brand: "dg-developers",
