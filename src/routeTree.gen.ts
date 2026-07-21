@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuccessRouteImport } from './routes/success'
+import { Route as GuiaRouteImport } from './routes/guia'
 import { Route as CancelRouteImport } from './routes/cancel'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
@@ -18,6 +19,11 @@ import { Route as ApiPublicCreemWebhookRouteImport } from './routes/api/public/c
 const SuccessRoute = SuccessRouteImport.update({
   id: '/success',
   path: '/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuiaRoute = GuiaRouteImport.update({
+  id: '/guia',
+  path: '/guia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CancelRoute = CancelRouteImport.update({
@@ -44,6 +50,7 @@ const ApiPublicCreemWebhookRoute = ApiPublicCreemWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cancel': typeof CancelRoute
+  '/guia': typeof GuiaRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/public/creem-webhook': typeof ApiPublicCreemWebhookRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cancel': typeof CancelRoute
+  '/guia': typeof GuiaRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/public/creem-webhook': typeof ApiPublicCreemWebhookRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cancel': typeof CancelRoute
+  '/guia': typeof GuiaRoute
   '/success': typeof SuccessRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/api/public/creem-webhook': typeof ApiPublicCreemWebhookRoute
@@ -68,6 +77,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cancel'
+    | '/guia'
     | '/success'
     | '/api/checkout'
     | '/api/public/creem-webhook'
@@ -75,6 +85,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cancel'
+    | '/guia'
     | '/success'
     | '/api/checkout'
     | '/api/public/creem-webhook'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cancel'
+    | '/guia'
     | '/success'
     | '/api/checkout'
     | '/api/public/creem-webhook'
@@ -90,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CancelRoute: typeof CancelRoute
+  GuiaRoute: typeof GuiaRoute
   SuccessRoute: typeof SuccessRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
   ApiPublicCreemWebhookRoute: typeof ApiPublicCreemWebhookRoute
@@ -102,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/success'
       fullPath: '/success'
       preLoaderRoute: typeof SuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guia': {
+      id: '/guia'
+      path: '/guia'
+      fullPath: '/guia'
+      preLoaderRoute: typeof GuiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cancel': {
@@ -138,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CancelRoute: CancelRoute,
+  GuiaRoute: GuiaRoute,
   SuccessRoute: SuccessRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
   ApiPublicCreemWebhookRoute: ApiPublicCreemWebhookRoute,
