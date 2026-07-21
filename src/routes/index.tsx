@@ -3,6 +3,13 @@ import { StickyHeader } from "@/components/StickyHeader";
 import { BuyButton } from "@/components/BuyButton";
 import { ChatMockup } from "@/components/ChatMockup";
 import { Reveal } from "@/components/Reveal";
+import {
+  FULL_PRICE_USD,
+  PROMO_PRICE_USD,
+  PROMO_END_ISO,
+  isPromoActive,
+  discountPercent,
+} from "@/lib/pricing";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -13,6 +20,46 @@ function SectionLabel({ n, title }: { n: string; title: string }) {
     <div className="flex items-baseline gap-4">
       <span className="font-mono text-xs text-muted-foreground">{n}</span>
       <span className="eyebrow">{title}</span>
+    </div>
+  );
+}
+
+function PriceBlock() {
+  const promo = isPromoActive();
+  const endDate = new Date(PROMO_END_ISO).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  if (!promo) {
+    return (
+      <div className="mt-12 flex flex-col items-center gap-2">
+        <div className="serif-display text-6xl md:text-7xl">
+          ${FULL_PRICE_USD}
+          <span className="ml-2 font-mono text-sm text-muted-foreground">USD</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-12 flex flex-col items-center gap-3">
+      <div className="inline-flex items-center gap-2 border border-accent-ink px-3 py-1 font-mono text-xs uppercase tracking-widest text-accent-ink">
+        −{discountPercent()}% · Hasta el {endDate}
+      </div>
+      <div className="flex items-baseline gap-4">
+        <span className="serif-display text-6xl md:text-7xl text-accent-ink">
+          ${PROMO_PRICE_USD}
+        </span>
+        <span className="serif-display text-3xl text-muted-foreground line-through decoration-1">
+          ${FULL_PRICE_USD}
+        </span>
+        <span className="font-mono text-sm text-muted-foreground">USD</span>
+      </div>
+      <p className="font-mono text-xs text-muted-foreground">
+        Precio de lanzamiento por tiempo limitado.
+      </p>
     </div>
   );
 }
@@ -358,7 +405,10 @@ function Landing() {
             <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground">
               Instálalo hoy. Sin suscripciones, sin custodios, sin fricción.
             </p>
-            <div className="mt-12 flex flex-col items-center gap-4">
+
+            <PriceBlock />
+
+            <div className="mt-10 flex flex-col items-center gap-4">
               <BuyButton variant="large" label="Comprar Trading Assistant" />
               <p className="font-mono text-xs text-muted-foreground">
                 Pago único · Licencia de por vida · Reembolso 14 días
