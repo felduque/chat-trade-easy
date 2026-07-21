@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { StickyHeader } from "@/components/StickyHeader";
 import { BuyButton } from "@/components/BuyButton";
 import { ChatMockup } from "@/components/ChatMockup";
@@ -433,11 +433,11 @@ function Landing() {
             </span>
           </div>
           <nav className="flex gap-6 font-mono text-xs text-muted-foreground">
+            <Link to="/guia" className="hover:text-foreground">
+              Guía de instalación
+            </Link>
             <a href="#" className="hover:text-foreground">
               Términos
-            </a>
-            <a href="#" className="hover:text-foreground">
-              Privacidad
             </a>
             <a href="#" className="hover:text-foreground">
               Soporte
